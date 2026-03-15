@@ -1,102 +1,123 @@
-# ThreatLens
-A documented hands-on exercise using Elastic Security (ELK Stack) to perform real log analysis, identify attack patterns, build a security monitoring dashboard, create custom detection rules, and write a formal incident triage report.
+# ThreatLens — Elastic Security Monitoring Exercise
+
+Hands-on SIEM practice using Elastic Security on Elastic Cloud. Real log analysis, custom detection rules, and a formal incident triage report
+
+> "You cannot defend what you cannot detect. This is the detection layer."
 
 ---
 
-## What I Did
+## About This Project
 
-### 1. Log Ingestion and Analysis
-- Loaded Apache-style web server logs into Elasticsearch via Elastic Cloud
-- Used Kibana Discover to query and filter 1,600+ log entries
-- Identified response code patterns: 200 (success), 404 (not found), 503 (server error)
-- Filtered Nigerian-origin traffic using geo.dest field
-- Identified top source IPs generating repeated error responses
+Real-world security operations workflow using the ELK Stack (Elasticsearch, Kibana, Elastic Security). Ingested web server logs, identified attack patterns, built a custom brute force detection rule, and produced a formal incident triage report — the same workflow a SOC analyst runs daily.
 
-### 2. Attack Pattern Identification
-- Searched for repeated 404 responses indicating directory enumeration or endpoint probing
-- Aggregated requests by source IP to identify high-volume suspicious actors
-- Explored Elastic Security Overview dashboard — network events, anomalies, alert panels
-- Enabled Elastic prebuilt detection rules for web attack patterns
+This exercise is the third layer of a connected body of work:
 
-### 3. Security Monitoring Dashboard
-Built a 3-panel dashboard titled **"Security Monitoring — Divine"** containing:
-- **Panel 1:** Failed auth attempts over time (bar chart by timestamp)
-- **Panel 2:** Top source IPs for failed requests (treemap by clientip)
-- **Panel 3:** Geographic origin of suspicious traffic (map visualization)
+- **Thesis** — identified the cryptographic vulnerabilities
+- **Vault-API** — implemented the defenses in code
+- **ThreatLens** — built the detection layer to catch attacks in progress
 
-### 4. Custom Brute Force Detection Rule
-Created a custom Threshold detection rule in Elastic Security:
-- **Rule name:** Brute Force Detection — High Volume 404s
-- **Logic:** Same IP generates 10+ failed requests within a 5-minute window
-- **Severity:** High
-- **Result:** Rule fired against sample data, generating a real alert in the Alerts panel
-
-### 5. Incident Triage Report
-Wrote a formal one-page incident triage report based on the fired alert:
-- Alert triggered, source IP, timestamps, volume, analysis, recommendation
-- Structured in the format used by real SOC teams
-- Saved as: `Incident_Triage_Report_BruteForce_Divine.pdf`
+**[Read the Incident Triage Report](./Incident_Triage_Report_BruteForce_Divine.pdf)**
 
 ---
 
-## Connection to Thesis Research
+## What I Built
 
-My undergraduate thesis (*Cryptanalysis of Cryptographic Algorithms in Nigerian Banking Security*, University of Debrecen, 2025) recommended BCrypt cost factor 12 for password hashing specifically because of brute force risk.
+**Log Analysis**
+Ingested Apache-style web server logs into Elasticsearch. Queried 1,600+ entries using Kibana Discover. Identified response code distributions, filtered Nigerian-origin traffic, and isolated high-frequency error patterns by source IP.
 
-This exercise closes the loop on that research:
+**Attack Pattern Detection**
+Identified repeated 404 responses indicating directory enumeration and endpoint probing. Aggregated requests by source IP to surface the highest-volume suspicious actors. Explored Elastic Security Overview dashboard and enabled prebuilt web attack detection rules.
 
-- **Thesis finding:** BCrypt cost 10 is insufficient. An attacker can attempt hundreds of passwords per second against a weak hash.
-- **Vault-API implementation:** BCrypt cost 12 — each hash check takes ~400ms, making automated attacks slow.
-- **This exercise:** The SIEM fires an alert after 10 failed attempts in 5 minutes, detecting the attack before it succeeds.
+**Security Monitoring Dashboard**
+Built a 3-panel dashboard — "Security Monitoring — Divine" — showing failed requests over time, top attacking IPs by volume, and geographic origin of suspicious traffic. This is what a SOC analyst looks at every morning.
 
-Research identified the vulnerability. Vault-API implements the defense. This exercise demonstrates the detection layer.
+**Custom Brute Force Detection Rule**
+Created a Threshold rule in Elastic Security: same IP generates 10+ failed requests within a 5-minute window triggers a High severity alert. Rule fired against real log data. Alert triaged and documented.
 
----
-
-## Tools Used
-
-| Tool | Purpose |
-|------|---------|
-| Elastic Cloud | Hosted Elasticsearch + Kibana environment |
-| Kibana Discover | Log querying and filtering |
-| Elastic Security | Alert management and detection rules |
-| Kibana Lens | Dashboard and visualization building |
-| Kibana Maps | Geographic traffic visualization |
+**Incident Triage Report**
+Formal one-page report documenting the fired alert: source IP, timestamps, volume, analysis, evidence, and remediation recommendations. Structured in the format used by real security operations teams.
 
 ---
 
-## Key Queries Used
+## The Thesis Connection
 
-```
+My undergraduate thesis (*Cryptanalysis of Cryptographic Algorithms in Nigerian Banking Security*, University of Debrecen, 2025) found that BCrypt's default cost factor of 10 is insufficient against modern brute-force attacks and recommended cost factor 12 as the minimum.
+
+This exercise closes the loop on that finding:
+
+**Research said:** An attacker can attempt hundreds of passwords per second against a weak hash.
+
+**Vault-API implemented:** BCrypt cost factor 12 — each check takes ~400ms, slowing automated attacks from milliseconds to minutes.
+
+**ThreatLens detects:** The SIEM fires a High severity alert after the 10th failed attempt in 5 minutes — catching the attack before it succeeds.
+
+The research identified the vulnerability. The API implements the defense. The SIEM catches what gets through.
+
+---
+
+## Key Queries
+
+```kql
 # Filter failed requests
 response:404
 
 # Filter by geographic origin
 geo.dest:"NG"
 
-# Top IPs by request volume (ES|QL)
-FROM kibana_sample_data_logs 
-| WHERE response == "404" 
-| STATS count = COUNT() BY clientip 
-| SORT count desc 
+# Combined failed auth filter
+response:404 OR response:503
+```
+
+```esql
+# Top IPs by failed request volume
+FROM kibana_sample_data_logs
+| WHERE response == "404"
+| STATS count = COUNT() BY clientip
+| SORT count desc
 | LIMIT 10
 ```
 
 ---
 
-## Incident Triage Report
+## Detection Rule
 
-The full triage report is included in this repository as:  
-`Incident_Triage_Report_BruteForce_Divine.pdf`
+| Field | Value |
+|-------|-------|
+| Rule type | Threshold |
+| Index | logs-* |
+| Query | response:404 |
+| Threshold field | clientip |
+| Threshold value | 10 |
+| Time window | 5 minutes |
+| Severity | High |
+| Rule name | Brute Force Detection — High Volume 404s |
 
-It documents the brute force pattern detected, source IP analysis, evidence from Kibana screenshots, and remediation recommendations.
+---
+
+## Deliverables
+
+- Screenshots of Discover queries and filtered results
+- Top suspicious IPs with request counts
+- 3-panel security monitoring dashboard
+- Custom detection rule with fired alert
+- **[Incident Triage Report PDF](./Incident_Triage_Report_BruteForce_Divine.pdf)**
 
 ---
 
-## Related Projects
+## Related Work
 
-- **Vault-API** — Spring Boot secure banking backend implementing research findings: [github.com/Divinekk/Vault-API](https://github.com/Divinekk/Vault-API)
-- **Nigerian-Fintech-Security-Analysis** — Research repository with thesis and case studies: [github.com/Divinekk/Nigerian-Fintech-Security-Analysis](https://github.com/Divinekk/Nigerian-Fintech-Security-Analysis)
-- **Blog Series** — API Security in Nigerian Fintech: [medium.com/@divine.ogbonna.chisom](https://medium.com/@divine.ogbonna.chisom)
+**[Vault-API](https://github.com/Divinekk/Vault-API)**
+Secure banking backend implementing thesis findings. BCrypt cost 12, AES-256-GCM encryption, BOLA prevention.
+
+**[Nigerian-Fintech-Security-Analysis](https://github.com/Divinekk/Nigerian-Fintech-Security-Analysis)**
+Research repository with full thesis, case studies, and vulnerability analysis.
+
+**[Blog Series](https://medium.com/@divine.ogbonna.chisom)**
+API Security in Nigerian Fintech — three-part published series.
 
 ---
+
+## Contact
+
+Divine Ogbonna
+[GitHub](https://github.com/Divinekk) | [LinkedIn](https://www.linkedin.com/in/ogbonna-divine-a81453242/) | [Medium](https://medium.com/@divine.ogbonna.chisom)
