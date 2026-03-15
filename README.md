@@ -1,4 +1,4 @@
-# ThreatLens — Elastic Security Monitoring Exercise
+# ThreatLens 
 
 Hands-on SIEM practice using Elastic Security on Elastic Cloud. Real log analysis, custom detection rules, and a formal incident triage report
 
