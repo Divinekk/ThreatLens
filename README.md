@@ -124,7 +124,7 @@ All evidence is documented in the `screenshots/` folder:
 - Top suspicious IPs with request counts
 - Three-panel security monitoring dashboard
 - Custom detection rule configured and enabled
-- **[Incident Triage Report PDF](./Incident_Triage_Report_BruteForce_Divine.pdf)**
+- **[Incident Triage Report PDF](Incident_Triage_Report_BruteForce_Divine..pdf)**
 
 ---
 
