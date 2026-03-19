@@ -16,7 +16,7 @@ This exercise is the third layer of a connected body of work:
 - **Vault-API** — implemented the defenses in code
 - **ThreatLens** — built the detection layer to catch attacks in progress
 
-**[Read the Incident Triage Report](./Incident_Triage_Report_BruteForce_Divine.pdf)**
+**[Read the Incident Triage Report](Incident_Triage_Report_BruteForce_Divine..pdf)**
 
 ---
 
